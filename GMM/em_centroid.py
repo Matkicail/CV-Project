@@ -8,10 +8,9 @@ class EMCCentroid:
     def __init__(self, numK, dataDims):
         self.numK = numK
         self.dataDims = dataDims
-        assert np.sum(lams) == 1.0, "initial responsibility should sum to one"
-        self.lams = lams # set of lambdas - M * 1, where M is the number of clusters
-        self.means = means # set of means - M * D, where D is the dimensions of the data
-        self.covs = covs # set of covariances - M * D * D 
+        self.lams = None # set of lambdas - M * 1, where M is the number of clusters
+        self.means = None # set of means - M * D, where D is the dimensions of the data
+        self.covs = None # set of covariances - M * D * D 
 
     def datapointResponsibilities(self, datapoints):
         """
@@ -67,4 +66,3 @@ class EMCCentroid:
     def randomParams(self):
         self.lams = np.ones(self.numK) / self.numK
         self.means = np.random.random((self.numK,self.dataDims))
-        
