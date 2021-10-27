@@ -80,4 +80,9 @@ def getFeatureVectors(images, masks, features, sigmaSmall = 3, sigmaLarge = 6):
         background.append(images[count][backIndices])
         foreground.append(images[count][foreIndices])
     
-    return background, foreground
+    # get initial estimates for forground and background
+    flattenedFeatures = []
+    for dataFeature in dataFeatures:
+        flattenedFeatures.append(dataFeature.flatten())
+
+    return background, foreground, flattenedFeatures
