@@ -9,17 +9,14 @@ class EMCCentroid:
         self.numK = numK
         self.dataDims = dataDims # assuming what gets passed in is an image with all it's data points
         self.lams = np.ones(numK)/numK
-        self.means = np.random.rand(numK)
+        self.means = np.random.rand(numK, dataDims)
         self.covs = self.initialiseCovs(self.dataDims, numK) # set of covariances - M * D * D 
 
     def initialiseCovs(self, dims, numK):
-        arr = []
+        A = np.random.rand(numK,dims,dims)
         for i in range(numK):
-            A = np.random.rand(dims,dims)
-            A += A.T
-            arr.append(A)
-        arr = np.array(arr)
-        return arr
+            A[i,:,:] += A[i,:,:].T
+        return A
 
     def datapointResponsibilities(self, datapoints):
         """

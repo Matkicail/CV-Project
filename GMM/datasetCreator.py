@@ -69,20 +69,9 @@ def getFeatureVectors(images, masks, features, sigmaSmall = 3, sigmaLarge = 6):
         dog = guassLarge - guassSmall
         dog = dog.reshape((dog.shape[0], dog.shape[1], dog.shape[2], 1))
         dataFeatures = np.concatenate((dataFeatures, dog), axis=3)
-    if "OtherFeature" in features:
-        raise NotImplementedError
-    background = []
-    foreground = []
-    count = 0
-    for mask in masks:
-        backIndices = np.where(mask == 0)
-        foreIndices = np.where(mask == 1)
-        background.append(images[count][backIndices])
-        foreground.append(images[count][foreIndices])
+    if "OtherFeature" in features: # HSV
+        dataFeatures = np.concatenate( dataFeatures , color.rgb2gray(images), axis=3)
     
-    # get initial estimates for forground and background
-    flattenedFeatures = []
-    for dataFeature in dataFeatures:
-        flattenedFeatures.append(dataFeature.flatten())
+    dataFeatures = dataFeatures.reshape((dataFeatures.shape[0],-1))
 
-    return background, foreground, flattenedFeatures
+    return dataFeatures
