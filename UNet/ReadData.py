@@ -8,7 +8,7 @@ from PIL import Image
 
 class ReadData():
     #Give the directory and imageSet Start and End. 6 images makes 1 set, so 6*1000 = 6000 images
-    def __init__(self, transform=None):
+    def __init__(self, transformImgs=None, transformMsks=None):
         path_pairs = list(zip(
         natsorted(glob('../puzzle_corners_1024x768/images-1024x768/*.png')),
         natsorted(glob('../puzzle_corners_1024x768/masks-1024x768/*.png')),
@@ -16,15 +16,18 @@ class ReadData():
         self.imgs = np.array([ipath for ipath, _ in path_pairs])
         self.msks = np.array([mpath for _, mpath in path_pairs])
 
-        self.transform = transforms.Compose(transform)
+        self.transformImgs = transforms.Compose(transformImgs)
+        self.transformMsks = transforms.Compose(transformMsks)
+
 
     def __getitem__(self, index):
         imgs = Image.open(self.imgs[index])
         msks = Image.open(self.msks[index])
 
-        if self.transform:
-            imgs = self.transform(imgs)
-            msks = self.transform(msks)
+        if self.transformImgs:
+            imgs = self.transformImgs(imgs)
+        if self.transformMsks:
+            msks = self.transformMsks(msks)
 
         return imgs, msks
 
