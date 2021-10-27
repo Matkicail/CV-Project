@@ -7,10 +7,19 @@ class EMCCentroid:
 
     def __init__(self, numK, dataDims):
         self.numK = numK
-        self.dataDims = dataDims
-        self.lams = None # set of lambdas - M * 1, where M is the number of clusters
-        self.means = None # set of means - M * D, where D is the dimensions of the data
-        self.covs = None # set of covariances - M * D * D 
+        self.dataDims = dataDims # assuming what gets passed in is an image with all it's data points
+        self.lams = np.ones(numK)/numK
+        self.means = np.random.rand(numK)
+        self.covs = self.initialiseCovs(self.dataDims, numK) # set of covariances - M * D * D 
+
+    def initialiseCovs(self, dims, numK):
+        arr = []
+        for i in range(numK):
+            A = np.random.rand(dims,dims)
+            A += A.T
+            arr.append(A)
+        arr = np.array(arr)
+        return arr
 
     def datapointResponsibilities(self, datapoints):
         """
