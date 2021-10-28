@@ -2,6 +2,7 @@ import pytorch_lightning as pl
 from ReadData import ReadData
 import torch
 import torch.nn as nn
+from torchvision.utils import save_image
 
 
 from UNet import UNetNetwork
@@ -23,6 +24,7 @@ class UNetTrainer(pl.LightningModule):
 
         self.model =  UNetNetwork()
         self.criterion = nn.BCEWithLogitsLoss()
+        self.L1 = nn.L1Loss()
         _, axs = plt.subplots(1, 3, figsize=(15,15))
         self.axs = axs
 
@@ -31,22 +33,22 @@ class UNetTrainer(pl.LightningModule):
 
     def training_step(self, batch, batch_idx):
         out = self.model(batch[0])
-
         loss = self.criterion(out, batch[1])
-
-        if batch_idx % 10 == 0:
-            out0 = batch[0][0,:,:,:].permute(1,2,0).detach().cpu().numpy()
-            out1 = batch[1][0,:,:,:].permute(1,2,0).detach().cpu().numpy()
-            out2 = out[0,:,:,:].permute(1,2,0).detach().cpu().numpy()
-
-            self.axs[0].imshow(out0.astype(np.float32), cmap="gray")
-            self.axs[1].imshow(out1.astype(np.float32), cmap="gray")
-            self.axs[2].imshow(out2.astype(np.float32), cmap="gray")
-            plt.show()
-
-        a = 2
         return loss
 
+    def validation_step(self, batch, batch_idx):
+        totalDone = self.current_epoch * len(self.train_dataloader()) + batch_idx
+
+        out = self.model(batch[0])
+        loss = self.criterion(out, batch[1])
+        img_sample = torch.cat((batch[1].data, out.data), -1)
+        save_image(img_sample, "Outputs/{0}.png".format(totalDone), nrow=1, normalize=True)
+
+        return loss
+
+
+    def test_step(self, batch, batch_idx):
+        return 0
 
 
 from torch.utils.data import DataLoader
@@ -57,10 +59,8 @@ if __name__ == "__main__":
 
     trainer = pl.Trainer(
         gpus = min(1, torch.cuda.device_count()),
-        max_epochs=200,
-        limit_val_batches=2,
+        max_epochs=30,
         precision=16,
-        log_every_n_steps=40,
         logger=False,
         checkpoint_callback=False
     )
@@ -78,6 +78,9 @@ if __name__ == "__main__":
     ]
     
 
-    train_dataloader = DataLoader(ReadData(transform, transform1))
+    train_dataloader = DataLoader(ReadData('./Data/Training', transform, transform1, SplitDataSet = True))
+    val_dataloader = DataLoader(ReadData('./Data/Validation', transform, transform1, SplitDataSet = False))
+    test_dataloader = DataLoader(ReadData('./Data/Testing', transform, transform1, SplitDataSet = False))
 
-    trainer.fit(unetTrainer, train_dataloader)
+
+    trainer.fit(unetTrainer, train_dataloader, val_dataloader)
