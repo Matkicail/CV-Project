@@ -10,7 +10,8 @@ class Decoder(nn.Module):
             nn.Upsample(scale_factor=2),
             nn.ReflectionPad2d(1),
             nn.Conv2d(in_size, out_size, kernel_size=3, stride=1, padding=0),
-            nn.GroupNorm(2, out_size, affine=True),
+            #nn.GroupNorm(2, out_size, affine=True),
+            nn.InstanceNorm2d(out_size),
             nn.ReLU(inplace=True)
         ]
 
@@ -19,9 +20,9 @@ class Decoder(nn.Module):
 
         self.model = nn.Sequential(*layers)
     
-    def forward(self, input, skip_input=None):
+    def forward(self, input, skip_input):
         #output = None
         output = self.model(input)
-        #output = torch.cat((output, skip_input), 1)
+        output = torch.cat((output, skip_input), 1)
 
         return output
