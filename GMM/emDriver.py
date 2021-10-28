@@ -18,7 +18,17 @@ training, validation, testing = createDataSets(images, masks)
 
 # use training to learn (the data set)
 print("Creating feature vectors...")
-flatFeat = getFeatureVectors(training[0], training[1], features=["RGB","DoG"])
+bGround, fGround = getFeatureVectors(training[0], training[1], features=["RGB","DoG"])
 print("Initialising EMCentroid...")
-em = EMCCentroid(2, 4)
-em.datapointResponsibilities(flatFeat[0])
+
+# running the foreground EMCs
+print("Training foreground GMM")
+fGroundEMCS = EMCCentroid(12, fGround.shape[-1])
+fGroundEMCS.run(fGround)
+
+# running the background EMCs
+print("Training background GMM")
+bGroundEMCS = EMCCentroid(4, fGround.shape[-1])
+bGroundEMCS.run(bGround)
+
+print("Training finished")

@@ -72,6 +72,9 @@ def getFeatureVectors(images, masks, features, sigmaSmall = 3, sigmaLarge = 6):
     if "OtherFeature" in features: # HSV
         dataFeatures = np.concatenate( dataFeatures , color.rgb2gray(images), axis=3)
     
-    dataFeatures = dataFeatures.reshape((dataFeatures.shape[0],-1))
+    # collect the features for the background and the foregroud
 
-    return dataFeatures
+    bGround = images[np.where(masks == 1)]
+    fGround = images[np.where(masks == 0)]
+
+    return bGround, fGround

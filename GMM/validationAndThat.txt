@@ -1,0 +1,19 @@
+background foreground split:
+
+whole point is to model the data using this.
+Pixel by pixel basis is fine.
+
+break into two sets of EMCentroids one purely on the background and one purely on the foreground.
+choose based on who is most likely from each set.
+
+hyper-parameters:
+the number of centroids, number of features.
+
+marking: make sure that comments, multiple files
+
+
+validation 6 cross - need to have a partitioning along each time (K-fold partitioning LOOK UP):
+choose two sets of numK
+choose three sets of feature sets
+
+do not forget fitting a different GM to has two sets of hyper-parameters (the background centeroid number and foreground centroid number)
