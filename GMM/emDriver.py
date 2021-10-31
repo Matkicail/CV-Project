@@ -23,12 +23,12 @@ print("Initialising EMCentroid...")
 
 # running the foreground EMCs
 print("Training foreground GMM")
-fGroundEMCS = EMCCentroid(12, fGround.shape[-1])
+fGroundEMCS = EMCCentroid(2, fGround.shape[-1])
 fGroundEMCS.run(fGround)
 
 # running the background EMCs
 print("Training background GMM")
-bGroundEMCS = EMCCentroid(4, fGround.shape[-1])
+bGroundEMCS = EMCCentroid(2, fGround.shape[-1])
 bGroundEMCS.run(bGround)
 
 print("Training finished")

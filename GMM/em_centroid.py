@@ -18,7 +18,7 @@ class EMCCentroid:
     def initialiseCovs(self, dims, numK, eps=1e-6):
         A = np.random.rand(numK,dims,dims)
         for i in range(numK):
-            A[i,:,:] += eps + np.eye(dims)
+            A[i,:,:] += dims * np.eye(dims)
         return A
 
     def datapointResponsibilities(self, datapoints):
@@ -65,31 +65,18 @@ class EMCCentroid:
         The responsibilities must be a matrix where each row respresents k's responsibility for each data point
         """
         cluster = 0
-        steps = int(len(datapoints)/ 100)
         for mean in self.means:
-            numerator = 0
-            cnt = 0
-            perc = 0
 
+            # Believe this is correct but if doesnt work just go datapoints.copy() * responsibilities[cluster,:]
             tempPoints = (datapoints.copy() - mean) * responsibilities[cluster,:].reshape(datapoints.shape[0], 1)
+
             numerator = (tempPoints).T @ (datapoints - mean)
-            # for datapoint in datapoints:
-            #     temp = datapoint.copy()
-            #     temp = temp.reshape((len(temp),1))
-            #     numerator += responsibilities[cluster][cnt]* ((temp - mean)@((temp-mean).T))
-            #     if cnt % steps == 0:
-            #         print('\t\t\tUpdate %d percent' % perc, end='\r')
-            #         perc += 1
-            #     cnt += 1
+
             denominator = np.sum(responsibilities[cluster,:])
             self.covs[cluster] = numerator / denominator 
-            a = 2 # debug step
+
     def EStep(self, datapoints):
-        # respsonsibilities = []
-        # for datapoint in datapoints:
-        #     respsonsibilities.append(self.datapointResponsibilities(datapoint))
         respsonsibilities = self.datapointResponsibilities(datapoints)
-        a = 2 # just as a debug step
         return respsonsibilities
 
     def MStep(self, responsibilities, datapoints):
