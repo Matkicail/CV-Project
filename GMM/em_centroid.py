@@ -1,3 +1,4 @@
+from cv2 import meanShift
 import numpy as np
 from numpy.linalg.linalg import _convertarray
 import scipy.stats as stats
@@ -42,7 +43,8 @@ class EMCCentroid:
         numerators = np.sum(responsibilities, axis=1)
         denominator = np.sum(numerators)
         self.lams = numerators/denominator
-        a = 2 # debug step
+
+
         return
     
     def meanUpdates(self, datapoints, responsibilities):
@@ -51,11 +53,11 @@ class EMCCentroid:
         The responsibilities must be a matrix where each row respresents k's responsibility for each data point
         Let v be the number of data points given which have 
         """
-        a = 2
-        numerator = responsibilities @ datapoints # gets a k*n @ n*v => result is k*v column vector
+
+        numerator = responsibilities @ datapoints # gets a column vector
         denominator = 1 / np.sum(responsibilities, axis = 1) # responsibility along the rows (so should be of length k and a column vector)
         self.means = (numerator.T * denominator).T # elementwise multiplication
-        a = 2 # debug step
+
         return
 
     def covariancesUpdate(self, datapoints, responsibilities):
@@ -74,6 +76,7 @@ class EMCCentroid:
 
             denominator = np.sum(responsibilities[cluster,:])
             self.covs[cluster] = numerator / denominator 
+            cluster += 1
 
     def EStep(self, datapoints):
         respsonsibilities = self.datapointResponsibilities(datapoints)
@@ -88,11 +91,9 @@ class EMCCentroid:
         self.lams = np.ones(self.numK) / self.numK
         self.means = np.random.random((self.numK,self.dataDims))
 
-    def run(self, datapoints, max = 1000, tol = 1e-2):
+    def run(self, datapoints, max = 1000, tol = 1e-1):
 
         # need conditions for convergence
-
-        # current debug to check process is working
         for i in range(max):
             print("\t Iteration: {0}...".format(i))
             responsibilities = self.EStep(datapoints.copy()) # at this point it is passing in the correct set
@@ -100,11 +101,28 @@ class EMCCentroid:
             tempMeans = self.means.copy()
             tempCovs = self.covs.copy()
             self.MStep(responsibilities, datapoints)
-            if np.all(tempLams - self.lams < tol):
+
+            lamDiffs = np.linalg.norm(tempLams - self.lams)
+            meanDifs = np.linalg.norm(tempMeans - self.means) / self.means.shape[0]
+            covDiffs = np.linalg.norm(tempCovs - self.covs) / self.covs.shape[0]
+            # or np.all(np.abs(lamDiffs - prevLamDiff) < tol
+            if np.all(lamDiffs < tol): # checking for a specified degree of convergence
                 print("lams were okay")
-                if np.all(tempMeans - self.means < tol):
+                # or np.all(np.abs(meanDifs - prevMeanDiff) < tol
+                if np.all(meanDifs < tol): # checking for a specified degree of convergence
                     print("means were okay")
-                    if np.all(tempCovs - self.covs < tol):
+                    # or np.all(np.abs(covDiffs - prevCovDiff) < tol
+                    if np.all(covDiffs < tol): # checking for a specified degree of convergence
                         print("covs were okay")
                         print("Finished Training...")
+                        print("Final parameters had the following differences (order is lams, means and covariances):")
+                        print("\t{0}".format(lamDiffs))
+                        print("\t{0}".format(meanDifs))
+                        print("\t{0}".format(covDiffs))
                         return
+                    else:
+                        print("Cov diffs: {0}".format(np.abs(covDiffs)))
+                else: 
+                    print("Mean diffs: {0}".format(np.abs(meanDifs)))
+            else: 
+                print("Lam diffs: {0}".format(np.abs(lamDiffs)))
