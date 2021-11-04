@@ -3,7 +3,7 @@ from numpy.linalg.linalg import _convertarray
 import scipy.stats as stats
 from em_centroid import *
 from datasetCreator import makeMasksBinary, collectImagesAndMasks, createDataSets, getFeatureVectors
-
+from matplotlib import pyplot as plt
 
 
 #####################
@@ -53,30 +53,60 @@ def validationAccuracy(fGroundEMCS, bGroundEMCS, validationFeatureVector, valida
     bestThresh = thresholds[bestThreshIndex]
     print("Best threshold is: {0}, with accuracy {1}".format(bestThresh, accuracies[bestThreshIndex]))
     return bestThresh, accuracies[bestThreshIndex]
+
+def visualRep(bestThresh, validationFeature, maskShape):
+    temp = validationFeature.copy()
+    fGroundProbs = fGroundEMCS.samplePoint(validationFeature[0:maskShape[1]*maskShape[2]])
+    bGroundProbs = bGroundEMCS.samplePoint(validationFeature[0:maskShape[1]*maskShape[2]])
+    bayesianProb = lam*fGroundProbs / (lam*fGroundProbs + (1-lam)*bGroundProbs)
+    temp[:] = 0
+    temp[np.where(bayesianProb > bestThresh) ] = 1 
+    temp = temp.reshape(maskShape)
+    firstImage = temp[0]
+    plt.imshow(firstImage)
+    plt.show()
+
 # collecting data sets
 print("Collecting Data sets...")
 images, masks = collectImagesAndMasks()
 print("Creating Data sets...")
 training, validation, testing = createDataSets(images, masks)
 
+feature=[
+    ["RGB","DoG"],
+    ["RGB"],
+    ["RGB, DoG, HSV"],
+    ["RGB"],
+    ["RGB","DoG"]
+]
+
+fGroundSizes = [4,8,12,16,16]
+bGroundSizes = [2,4,6,8,8]
+accuracies = []
 # use training to learn (the data set)
-i = 0
-print("Creating feature vectors...")
-bGround, fGround = getFeatureVectors(training[i][0], training[i][1], features=["RGB","DoG"])
-print("Initialising EMCentroid...")
+for i in range(5):
+    print("Creating feature vectors...")
+    bGround, fGround = getFeatureVectors(training[i][0], training[i][1], features=feature[i])
+    print("Initialising EMCentroid...")
 
-# running the foreground EMCs
-print("Training foreground GMM")
-fGroundEMCS = EMCCentroid(4, fGround.shape[-1])
-fGroundEMCS.run(fGround, tol=1e-3)
+    # running the foreground EMCs
+    print("Training foreground GMM")
+    fGroundEMCS = EMCCentroid(fGroundSizes[i], fGround.shape[-1])
+    fGroundEMCS.run(fGround, tol=1e-3)
 
-# running the background EMCs
-print("Training background GMM")
-bGroundEMCS = EMCCentroid(2, bGround.shape[-1])
-bGroundEMCS.run(bGround, tol=1e-3)
+    # running the background EMCs
+    print("Training background GMM")
+    bGroundEMCS = EMCCentroid(bGroundSizes[i], bGround.shape[-1])
+    bGroundEMCS.run(bGround, tol=1e-3)
 
-print("Getting lambda values...")
-lam = determineLam(bGround.shape[0], fGround.shape[0])
-print("Evaluating model and tuning threshold for model...")
-currThresh, currAcc = validationAccuracy(fGroundEMCS, bGroundEMCS, validation[i][0], validation[i][1], lam)
-print("Training finished for itteration {0} \r".format(i), end="\r")
+    print("Getting lambda values...")
+    lam = determineLam(bGround.shape[0], fGround.shape[0])
+    print("Evaluating model and tuning threshold for model...")
+    currThresh, currAcc = validationAccuracy(fGroundEMCS, bGroundEMCS, validation[i][0], validation[i][1], lam)
+    print("Training finished for itteration {0} \r".format(i), end="\r")
+    shape = (8,768,1024, fGround.shape[-1])
+    visualRep(currThresh, validation[i][0], shape)
+    accuracies.append(currAcc)
+
+accuracies = np.array(accuracies)
+np.savetxt("AccuraciesForModel.txt", accuracies)

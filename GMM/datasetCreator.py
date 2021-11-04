@@ -99,7 +99,7 @@ def getFeatureVectors(images, masks, features, sigmaSmall = 3, sigmaLarge = 6):
         dog = guassLarge - guassSmall
         dog = dog.reshape((dog.shape[0], dog.shape[1], dog.shape[2], 1))
         dataFeatures = np.concatenate((dataFeatures, dog), axis=3)
-    if "OtherFeature" in features: # HSV
+    if "HSV" in features: # HSV
         dataFeatures = np.concatenate( dataFeatures , color.rgb2hsv(images), axis=3)
 
     # collect the features for the background and the foregroud
