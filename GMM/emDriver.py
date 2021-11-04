@@ -109,4 +109,28 @@ for i in range(5):
     accuracies.append(currAcc)
 
 accuracies = np.array(accuracies)
-np.savetxt("AccuraciesForModel.txt", accuracies)
+# np.savetxt("AccuraciesForModel.txt", accuracies)
+bestModelIndex = np.argmax(accuracies)
+print("Creating feature vectors...")
+bGround, fGround = getFeatureVectors(training[bestModelIndex][0], training[bestModelIndex][1], features=feature[bestModelIndex])
+print("Initialising EMCentroid...")
+
+# running the foreground EMCs
+print("Training foreground GMM")
+fGroundEMCS = EMCCentroid(fGroundSizes[bestModelIndex], fGround.shape[-1])
+fGroundEMCS.run(fGround, tol=1e-3)
+
+# running the background EMCs
+print("Training background GMM")
+bGroundEMCS = EMCCentroid(bGroundSizes[bestModelIndex], bGround.shape[-1])
+bGroundEMCS.run(bGround, tol=1e-3)
+
+print("Getting lambda values...")
+lam = determineLam(bGround.shape[0], fGround.shape[0])
+print("Evaluating model and tuning threshold for model...")
+currThresh, currAcc = validationAccuracy(fGroundEMCS, bGroundEMCS, training[bestModelIndex][0], training[bestModelIndex][1], lam)
+print("Training finished for itteration {0} \r".format(i), end="\r")
+shape = (8,768,1024, fGround.shape[-1])
+visualRep(currThresh, training[bestModelIndex][0], shape)
+print("Current accuracy: {0}".format(currAcc))
+print("Best Theta: {0}".format(currThresh))
