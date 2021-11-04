@@ -126,12 +126,6 @@ class EMCCentroid:
                     print("means were okay")
                     # or np.all(np.abs(covDiffs - prevCovDiff) < tol
                     if np.all(covDiffs < tol): # checking for a specified degree of convergence
-                        # print("covs were okay")
-                        # print("Finished Training...")
-                        # print("Final parameters had the following differences (order is lams, means and covariances):")
-                        # print("\t{0}".format(lamDiffs))
-                        # print("\t{0}".format(meanDifs))
-                        # print("\t{0}".format(covDiffs))
                         return
                     else:
                         print("Cov diffs: {0}".format(np.abs(covDiffs)))
