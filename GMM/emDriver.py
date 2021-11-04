@@ -40,7 +40,7 @@ def validationAccuracy(fGroundEMCS, bGroundEMCS, validationFeatureVector, valida
     bayesianProb = lam*fGroundProbs / (lam*fGroundProbs + (1-lam)*bGroundProbs)
     flatBayes = bayesianProb.flatten()
     # find the best threshold value
-    thresholds = np.linspace(start = 0, stop = 1, num=100)
+    thresholds = np.linspace(start = 0, stop = 1, num=200)
     accuracies = np.array(())
     for thresh in thresholds:
         temp = np.zeros((len(flatBayes)))
@@ -53,6 +53,21 @@ def validationAccuracy(fGroundEMCS, bGroundEMCS, validationFeatureVector, valida
     bestThresh = thresholds[bestThreshIndex]
     print("Best threshold is: {0}, with accuracy {1}".format(bestThresh, accuracies[bestThreshIndex]))
     return bestThresh, accuracies[bestThreshIndex]
+
+def testingAccuracy(fGroundEMCS, bGroundEMCS, testingFeatureVector, testingMasks, lam, thresh):
+    testingAnswers = testingMasks.astype(int)
+    # given a point see what the GMMs' probs are for it
+    fGroundProbs = fGroundEMCS.samplePoint(testingFeatureVector)
+    bGroundProbs = bGroundEMCS.samplePoint(testingFeatureVector)
+
+    # check the prior value
+    bayesianProb = lam*fGroundProbs / (lam*fGroundProbs + (1-lam)*bGroundProbs)
+    flatBayes = bayesianProb.flatten()
+    temp = np.zeros((len(flatBayes)))
+    temp[np.where(flatBayes > thresh)] = 1
+    temp = temp.astype(int)
+    acc = accuracy(temp, testingAnswers.copy())
+    return acc
 
 def visualRep(bestThresh, validationFeature, maskShape):
     temp = validationFeature.copy()
@@ -105,31 +120,31 @@ for i in range(5):
     currThresh, currAcc = validationAccuracy(fGroundEMCS, bGroundEMCS, validation[i][0], validation[i][1], lam)
     print("Training finished for iteration {0}".format(i))
     shape = (8,768,1024, fGround.shape[-1])
-    visualRep(currThresh, validation[i][0], shape)
+    # visualRep(currThresh, validation[i][0], shape)
     accuracies.append(currAcc)
 
 accuracies = np.array(accuracies)
 # np.savetxt("AccuraciesForModel.txt", accuracies)
 bestModelIndex = np.argmax(accuracies)
-print("Creating feature vectors...")
+print("Testing Process: Creating feature vectors...")
 bGround, fGround = getFeatureVectors(training[bestModelIndex][0], training[bestModelIndex][1], features=feature[bestModelIndex])
-print("Initialising EMCentroid...")
+print("Testing Process: Initialising EMCentroid...")
 
 # running the foreground EMCs
-print("Training foreground GMM")
+print("Testing Process: Training foreground GMM")
 fGroundEMCS = EMCCentroid(fGroundSizes[bestModelIndex], fGround.shape[-1])
 fGroundEMCS.run(fGround, tol=1e-3)
 
 # running the background EMCs
-print("Training background GMM")
+print("Testing Process: Training background GMM")
 bGroundEMCS = EMCCentroid(bGroundSizes[bestModelIndex], bGround.shape[-1])
 bGroundEMCS.run(bGround, tol=1e-3)
 
-print("Getting lambda values...")
+print("Testing Process: Getting lambda values...")
 lam = determineLam(bGround.shape[0], fGround.shape[0])
-print("Evaluating model and tuning threshold for model...")
-currThresh, currAcc = validationAccuracy(fGroundEMCS, bGroundEMCS, training[0], training[1], lam)
-print("Training finished for iteration {0} \r".format(i), end="\r")
+print("Testing Process: Evaluating model and tuning threshold for model...")
+currThresh, currAcc = testingAccuracy(fGroundEMCS, bGroundEMCS, training[0], training[1], lam)
+print("Testing Process finished")
 shape = (8,768,1024, fGround.shape[-1])
 visualRep(currThresh, training[0], shape)
 print("Current accuracy: {0}".format(currAcc))

@@ -30,7 +30,7 @@ def collectImagesAndMasks():
     masks = makeMasksBinary(masks)
     return images, masks
 
-def create5KFolds(sizeOfData):
+def create5KFolds(sizeOfData): # update this
     """
     Given a set of indices create our 5-K folds
     """
