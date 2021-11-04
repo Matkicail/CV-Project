@@ -1,3 +1,4 @@
+from numpy.core.fromnumeric import size
 import skimage
 from skimage import io as imageio
 from skimage import filters, color
@@ -29,29 +30,58 @@ def collectImagesAndMasks():
     masks = makeMasksBinary(masks)
     return images, masks
 
+def create5KFolds(sizeOfData):
+    """
+    Given a set of indices create our 5-K folds
+    """
+    # do not leak validation into testing
+    # do not leak testing into validation
+    # dont use validation data that was used to train
+    
+    # first segment testing indices away from the data set
+    prop = 0.1666666666667
+    np.random.seed(0) # seed after each action due to how np.random works (readjusts seed each time)
+    temp = np.arange(start = 0 , stop = sizeOfData)
+    temp = np.random.permutation(temp)
+    testingIndices = temp[0:8]
+    
+    # possible to permute 
+    remainingSet = temp[8:]
+    possibleVals = []
+    trainingSet = []
+    arr = np.array(remainingSet)
+    for i in range(5): 
+        tempArr = np.random.permutation(arr)
+        possibleVals.append(list(tempArr[0:8]))
+        trainingSet.append(list(tempArr[8:]))
+
+    return testingIndices, possibleVals, trainingSet
+
 # generate entries to be used for training, validation and testing
 def createDataSets(images, masks):
 
     """
     Creates a custom data set of training, validation and testing sets for a set of images and their respective masks
-    Returns training set, validation set, testing set
+    Returns training set, validation set, testing set.
+    This returns the 5-fold cross validation set of data.
     """
-
-    indices = np.arange(start=0, stop = len(images))
-    indices = np.random.permutation(indices)
-    trainingIndices = indices[0:int(len(indices)*0.70)] # first 70%
-    validationIndices = indices[int(len(indices)*0.70):int(len(indices)*0.85)] # second last set of 15%
-    testingIndices = indices[int(len(indices)*0.85):] # last 15%
+    testingIndices, validationFolds, trainingFolds = create5KFolds(len(images))
     
-    trainingImages = images[trainingIndices]
-    trainingMasks = masks[trainingIndices]
-    training = [trainingImages, trainingMasks]
-    validationImages = images[validationIndices]
-    validationMasks = images[validationIndices]
-    validation = [validationImages, validationMasks]
-    testingImages = images[testingIndices]
-    testingMasks = masks[testingIndices]
-    testing = [testingImages, testingMasks]
+    testing = [images[testingIndices], masks[testingIndices]]
+    validation = [
+        [images[validationFolds[0]], masks[validationFolds[0]]],
+        [images[validationFolds[1]], masks[validationFolds[1]]],
+        [images[validationFolds[2]], masks[validationFolds[2]]],
+        [images[validationFolds[3]], masks[validationFolds[3]]],
+        [images[validationFolds[4]], masks[validationFolds[4]]]
+    ]
+    training = [
+        [images[trainingFolds[0]], masks[trainingFolds[0]]],
+        [images[trainingFolds[1]], masks[trainingFolds[1]]],
+        [images[trainingFolds[2]], masks[trainingFolds[2]]],
+        [images[trainingFolds[3]], masks[trainingFolds[3]]],
+        [images[trainingFolds[4]], masks[trainingFolds[4]]]
+    ]
     return training, validation, testing
 
 def getFeatureVectors(images, masks, features, sigmaSmall = 3, sigmaLarge = 6):
@@ -70,8 +100,8 @@ def getFeatureVectors(images, masks, features, sigmaSmall = 3, sigmaLarge = 6):
         dog = dog.reshape((dog.shape[0], dog.shape[1], dog.shape[2], 1))
         dataFeatures = np.concatenate((dataFeatures, dog), axis=3)
     if "OtherFeature" in features: # HSV
-        dataFeatures = np.concatenate( dataFeatures , color.rgb2gray(images), axis=3)
-    
+        dataFeatures = np.concatenate( dataFeatures , color.rgb2hsv(images), axis=3)
+
     # collect the features for the background and the foregroud
 
     bGround = images[np.where(masks == 1)]

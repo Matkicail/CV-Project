@@ -7,16 +7,19 @@ import scipy.stats as stats
 class EMCCentroid:
 
     def __init__(self, numK, dataDims):
+        """
+        Centroid class that will be used for both background and foreground
+        """
         self.numK = numK
         self.dataDims = dataDims # assuming what gets passed in is an image with all it's data points
         self.lams = np.ones(numK)/numK
         self.means = np.random.rand(numK, dataDims)
         self.covs = self.initialiseCovs(self.dataDims, numK) # set of covariances - M * D * D 
 
-    def processData(self, datapoints):
-        return np.mean(datapoints, axis = -1) # a way to transform the data point to see what the data point looks like for each channel
-
-    def initialiseCovs(self, dims, numK, eps=1e-6):
+    def initialiseCovs(self, dims, numK):
+        """
+        Initialises the centroids 
+        """
         A = np.random.rand(numK,dims,dims)
         for i in range(numK):
             A[i,:,:] += dims * np.eye(dims)
@@ -34,6 +37,16 @@ class EMCCentroid:
         denominators = np.sum(numerators, axis = 0)
         responsibilities = numerators / denominators
         return responsibilities
+
+    def samplePoint(self, datapoints):
+        """
+        Getting the probability that of a set of points which comes from this set of centroids as given by the equations in the PDF (3,4,5)
+        """
+        prob = 0
+        for i in range(self.means.shape[0]):
+            # tempProb =  stats.multivariate_normal.pdf(datapoints, self.means[i], self.covs[i])
+            prob += self.lams[i] * stats.multivariate_normal.pdf(datapoints, self.means[i], self.covs[i])
+        return prob
 
     def lambdasUpdate(self, responsibilities):
         """
@@ -113,12 +126,12 @@ class EMCCentroid:
                     print("means were okay")
                     # or np.all(np.abs(covDiffs - prevCovDiff) < tol
                     if np.all(covDiffs < tol): # checking for a specified degree of convergence
-                        print("covs were okay")
-                        print("Finished Training...")
-                        print("Final parameters had the following differences (order is lams, means and covariances):")
-                        print("\t{0}".format(lamDiffs))
-                        print("\t{0}".format(meanDifs))
-                        print("\t{0}".format(covDiffs))
+                        # print("covs were okay")
+                        # print("Finished Training...")
+                        # print("Final parameters had the following differences (order is lams, means and covariances):")
+                        # print("\t{0}".format(lamDiffs))
+                        # print("\t{0}".format(meanDifs))
+                        # print("\t{0}".format(covDiffs))
                         return
                     else:
                         print("Cov diffs: {0}".format(np.abs(covDiffs)))
