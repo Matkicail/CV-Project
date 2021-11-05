@@ -1,0 +1,16 @@
+best model accuracy on testing data got 0.9772159258524576 accuracy with a theta of 0.01001001001001001, which corresponded to the last model (LAST AT CURRENT)
+
+MODELS:
+feature=[
+    ["RGB","DoG"],
+    ["RGB"],
+    ["RGB, DoG, HSV"],
+    ["RGB"],
+    ["RGB","DoG","HSV"]
+]
+
+fGroundSizes = [4,8,12,16,16]
+bGroundSizes = [2,4,6,8,8]
+
+Time to train the best model: Average time for training: 51.90623261928558 seconds
+Time for inference the besst model: Average time for inference: 5.268622922897339 seconds

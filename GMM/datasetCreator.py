@@ -49,11 +49,17 @@ def create5KFolds(sizeOfData): # update this
     remainingSet = temp[8:]
     possibleVals = []
     trainingSet = []
-    arr = np.array(remainingSet)
-    for i in range(5): 
-        tempArr = np.random.permutation(arr)
-        possibleVals.append(list(tempArr[0:8]))
-        trainingSet.append(list(tempArr[8:]))
+
+    for i in range(5):
+        tempVals = []
+        tempTrain = []
+        for j in range(40):
+            if j < 8:
+                tempVals.append(remainingSet[(i*8+j)%40])
+            else:
+                tempTrain.append(remainingSet[(i*8+j)%40])
+        possibleVals.append(tempVals)   
+        trainingSet.append(tempTrain)
 
     return testingIndices, possibleVals, trainingSet
 
@@ -100,7 +106,7 @@ def getFeatureVectors(images, masks, features, sigmaSmall = 3, sigmaLarge = 6):
         dog = dog.reshape((dog.shape[0], dog.shape[1], dog.shape[2], 1))
         dataFeatures = np.concatenate((dataFeatures, dog), axis=3)
     if "HSV" in features: # HSV
-        dataFeatures = np.concatenate( dataFeatures , color.rgb2hsv(images), axis=3)
+        dataFeatures = np.concatenate( (dataFeatures , color.rgb2hsv(images)), axis=3)
 
     # collect the features for the background and the foregroud
 

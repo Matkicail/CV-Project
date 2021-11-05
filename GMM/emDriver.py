@@ -4,7 +4,7 @@ import scipy.stats as stats
 from em_centroid import *
 from datasetCreator import makeMasksBinary, collectImagesAndMasks, createDataSets, getFeatureVectors
 from matplotlib import pyplot as plt
-
+import time
 
 #####################
 #    DRIVER CODE    #
@@ -40,7 +40,7 @@ def validationAccuracy(fGroundEMCS, bGroundEMCS, validationFeatureVector, valida
     bayesianProb = lam*fGroundProbs / (lam*fGroundProbs + (1-lam)*bGroundProbs)
     flatBayes = bayesianProb.flatten()
     # find the best threshold value
-    thresholds = np.linspace(start = 0, stop = 1, num=200)
+    thresholds = np.linspace(start = 0, stop = 1, num=1000)
     accuracies = np.array(())
     for thresh in thresholds:
         temp = np.zeros((len(flatBayes)))
@@ -55,6 +55,7 @@ def validationAccuracy(fGroundEMCS, bGroundEMCS, validationFeatureVector, valida
     return bestThresh, accuracies[bestThreshIndex]
 
 def testingAccuracy(fGroundEMCS, bGroundEMCS, testingFeatureVector, testingMasks, lam, thresh):
+    testingMasks = np.array(testingMasks)
     testingAnswers = testingMasks.astype(int)
     # given a point see what the GMMs' probs are for it
     fGroundProbs = fGroundEMCS.samplePoint(testingFeatureVector)
@@ -92,12 +93,15 @@ feature=[
     ["RGB"],
     ["RGB, DoG, HSV"],
     ["RGB"],
-    ["RGB","DoG"]
+    ["RGB","DoG","HSV"]
 ]
 
 fGroundSizes = [4,8,12,16,16]
 bGroundSizes = [2,4,6,8,8]
 accuracies = []
+thresholds = []
+backModels = []
+frontModels = []
 # use training to learn (the data set)
 for i in range(5):
     print("Creating feature vectors...")
@@ -108,44 +112,65 @@ for i in range(5):
     print("Training foreground GMM")
     fGroundEMCS = EMCCentroid(fGroundSizes[i], fGround.shape[-1])
     fGroundEMCS.run(fGround, tol=1e-3)
+    frontModels.append(fGroundEMCS)
 
     # running the background EMCs
     print("Training background GMM")
     bGroundEMCS = EMCCentroid(bGroundSizes[i], bGround.shape[-1])
     bGroundEMCS.run(bGround, tol=1e-3)
+    backModels.append(bGroundEMCS)
 
     print("Getting lambda values...")
     lam = determineLam(bGround.shape[0], fGround.shape[0])
     print("Evaluating model and tuning threshold for model...")
     currThresh, currAcc = validationAccuracy(fGroundEMCS, bGroundEMCS, validation[i][0], validation[i][1], lam)
+    thresholds.append(currThresh)
     print("Training finished for iteration {0}".format(i))
     shape = (8,768,1024, fGround.shape[-1])
     # visualRep(currThresh, validation[i][0], shape)
     accuracies.append(currAcc)
 
+
+# ACTUAL RUNNING OF ALGORITHM
+
+timeTraining = 00
+timeInference = 0
+
 accuracies = np.array(accuracies)
 # np.savetxt("AccuraciesForModel.txt", accuracies)
 bestModelIndex = np.argmax(accuracies)
-print("Testing Process: Creating feature vectors...")
-bGround, fGround = getFeatureVectors(training[bestModelIndex][0], training[bestModelIndex][1], features=feature[bestModelIndex])
-print("Testing Process: Initialising EMCentroid...")
+numRuns = 10
+for t in range(numRuns):
+    learnTime = time.time()
+    print("Testing Process: Creating feature vectors...")
+    bGround, fGround = getFeatureVectors(training[bestModelIndex][0], training[bestModelIndex][1], features=feature[bestModelIndex])
+    print("Testing Process: Initialising EMCentroid...")
 
-# running the foreground EMCs
-print("Testing Process: Training foreground GMM")
-fGroundEMCS = EMCCentroid(fGroundSizes[bestModelIndex], fGround.shape[-1])
-fGroundEMCS.run(fGround, tol=1e-3)
+    # running the foreground EMCs
+    print("Testing Process: Training foreground GMM")
+    fGroundEMCS = EMCCentroid(fGroundSizes[bestModelIndex], fGround.shape[-1])
+    fGroundEMCS.run(fGround, tol=1e-3)
 
-# running the background EMCs
-print("Testing Process: Training background GMM")
-bGroundEMCS = EMCCentroid(bGroundSizes[bestModelIndex], bGround.shape[-1])
-bGroundEMCS.run(bGround, tol=1e-3)
+    # running the background EMCs
+    print("Testing Process: Training background GMM")
+    bGroundEMCS = EMCCentroid(bGroundSizes[bestModelIndex], bGround.shape[-1])
+    bGroundEMCS.run(bGround, tol=1e-3)
 
-print("Testing Process: Getting lambda values...")
-lam = determineLam(bGround.shape[0], fGround.shape[0])
-print("Testing Process: Evaluating model and tuning threshold for model...")
-currThresh, currAcc = testingAccuracy(fGroundEMCS, bGroundEMCS, training[0], training[1], lam)
-print("Testing Process finished")
-shape = (8,768,1024, fGround.shape[-1])
-visualRep(currThresh, training[0], shape)
-print("Current accuracy: {0}".format(currAcc))
-print("Best Theta: {0}".format(currThresh))
+    print("Testing Process: Getting lambda values...")
+    lam = determineLam(bGround.shape[0], fGround.shape[0])
+    timeTraining += time.time() - learnTime 
+
+for i in range(10):
+
+    print("Testing Process: Evaluating model and tuning threshold for model...")
+    infTime = time.time()
+    currAcc = testingAccuracy(frontModels[bestModelIndex], backModels[bestModelIndex], testing[0], testing[1], lam, thresholds[bestModelIndex])
+    print("Testing Process finished")
+    shape = (8,768,1024, fGround.shape[-1])
+    timeInference += time.time() - infTime
+    visualRep(currThresh, testing[0], shape)
+    print("Current accuracy: {0}".format(currAcc))
+    print("Best Theta: {0}".format(currThresh))
+
+print("Average time for training: {0}".format(timeTraining/numRuns))
+print("Average time for inference: {0}".format(timeInference/numRuns))
