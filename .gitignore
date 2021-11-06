@@ -4,3 +4,5 @@ UNet/__pycache__/ReadData.cpython-39.pyc
 UNet/Data
 Unet/Outputs
 Unet/__pycache__
+UNet/logs/default/version_0/checkpoints/epoch=1-step=361.ckpt
+UNet/logs/default/version_0/events.out.tfevents.1636187452.LAPTOP-2U9542U3.14148.0

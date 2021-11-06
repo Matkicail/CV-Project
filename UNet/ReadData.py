@@ -9,7 +9,7 @@ from shutil import copy2, rmtree
 from random import randrange
 class ReadData():
     #Give the directory and imageSet Start and End. 6 images makes 1 set, so 6*1000 = 6000 images
-    def __init__(self, directory, transformImgs=None, transformMsks=None, splitDataSet = False, augmentDataSet = False):
+    def __init__(self, directory, transformImgs=None, splitDataSet = False, augmentDataSet = False):
         path_pairs = None
 
         #Load the images from the correct directory
@@ -26,7 +26,6 @@ class ReadData():
         
         #Save transformations
         self.transformImgs = transforms.Compose(transformImgs)
-        self.transformMsks = transforms.Compose(transformMsks)
 
         #Set up directories
         self.trainingDirectory = "./Data/Training"
@@ -49,8 +48,7 @@ class ReadData():
 
         if self.transformImgs:
             imgs = self.transformImgs(imgs)
-        if self.transformMsks:
-            msks = self.transformMsks(msks)
+            msks = self.transformImgs(msks)
 
         return imgs, msks
 
