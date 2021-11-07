@@ -2,7 +2,6 @@ import os
 import torchvision.transforms as transforms
 from natsort import natsorted
 from glob import glob
-from skimage import img_as_float32, img_as_ubyte
 import numpy as np
 from PIL import Image
 from shutil import copy2, rmtree
@@ -55,6 +54,8 @@ class ReadData():
     def __len__(self):
         return len(self.imgs)
 
+    #-----------------------Helper-----------------------
+
     def CollectImages(self, directory):
         path_pairs = list(zip(
                 natsorted(glob(directory + '/images-1024x768/*.png')),
@@ -98,7 +99,6 @@ class ReadData():
                 copy2(self.msks[i], self.testingDirectory + '/masks-1024x768')
 
     def AugmentDataSet(self):
-
         #Rotate and save
         for i in range(len(self.imgs)):
             degrees = np.linspace(0, 360, randrange(3, 10))

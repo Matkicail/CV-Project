@@ -41,7 +41,7 @@ class UNetNetwork(nn.Module):
         d5 = self.down5(d4)
 
         #Decoder
-        u1 = torch.utils.checkpoint.checkpoint(self.out1, d5, d4)
+        u1 = torch.utils.checkpoint.checkpoint(self.out1, d5, d4) #Gradient checkpointing
         u2 = self.out2(u1, d3)
         u3 = self.out3(u2, d2)
         u4 = self.out4(u3, d1)

@@ -7,8 +7,8 @@ from torchvision.utils import save_image
 import numpy as np
 
 from UNet import UNetNetwork
-from torch.utils.tensorboard import SummaryWriter
 
+#(Pytorch lightning)
 class UNetTrainer(pl.LightningModule):
     def __init__(self):
         super().__init__()
@@ -21,18 +21,18 @@ class UNetTrainer(pl.LightningModule):
         self.L1_criterion = nn.L1Loss()
 
 
-    #Set up optimization step
+    #Set up optimization step (Pytorch lightning)
     def configure_optimizers(self):
         return torch.optim.Adam(self.model.parameters(), lr=0.0002, betas=(0.5, 0.999))
 
-    #Training Step
+    #Training Step (Pytorch lightning)
     def training_step(self, batch, batch_idx):
         out = self.model(batch[0])
         loss = self.criterion(out, batch[1])
         self.log("Loss/Train", loss, on_step=True, on_epoch=True, prog_bar=True, logger=True)
         return loss
 
-    #Validation Outputs
+    #Validation Step (Pytorch lightning)
     def validation_step(self, batch, batch_idx):
         totalDone = self.current_epoch * len(self.train_dataloader()) + batch_idx
 
@@ -44,6 +44,7 @@ class UNetTrainer(pl.LightningModule):
         return loss
 
     
+    #Test Step (Pytorch lightning)
     def test_step(self, batch, batch_idx):
         totalDone = self.current_epoch * len(self.test_dataloader()) + batch_idx
 
@@ -69,13 +70,13 @@ if __name__ == "__main__":
     #Create Trainer
     trainer = pl.Trainer(
         gpus = min(1, torch.cuda.device_count()),
-        max_epochs=8,
+        max_epochs=6,
         precision=16,
         logger=tb_logger,
         log_every_n_steps=1
     )
 
-    #Transform for puzzle
+    #Transform for puzzle images
     transform = [
         transforms.ToTensor(),
     ]
