@@ -44,7 +44,6 @@ class EMCCentroid:
         """
         prob = 0
         for i in range(self.means.shape[0]):
-            # tempProb =  stats.multivariate_normal.pdf(datapoints, self.means[i], self.covs[i])
             prob += self.lams[i] * stats.multivariate_normal.pdf(datapoints, self.means[i], self.covs[i])
         return prob
 
@@ -81,12 +80,8 @@ class EMCCentroid:
         """
         cluster = 0
         for mean in self.means:
-
-            # Believe this is correct but if doesnt work just go datapoints.copy() * responsibilities[cluster,:]
             tempPoints = (datapoints.copy() - mean) * responsibilities[cluster,:].reshape(datapoints.shape[0], 1)
-
             numerator = (tempPoints).T @ (datapoints - mean)
-
             denominator = np.sum(responsibilities[cluster,:])
             self.covs[cluster] = numerator / denominator 
             cluster += 1
@@ -116,15 +111,12 @@ class EMCCentroid:
             self.MStep(responsibilities, datapoints)
 
             lamDiffs = np.linalg.norm(tempLams - self.lams)
-            meanDifs = np.linalg.norm(tempMeans - self.means) / self.means.shape[0]
-            covDiffs = np.linalg.norm(tempCovs - self.covs) / self.covs.shape[0]
-            # or np.all(np.abs(lamDiffs - prevLamDiff) < tol
+            meanDifs = np.linalg.norm(tempMeans - self.means) / self.means.shape[0] # NOTE average distance of params
+            covDiffs = np.linalg.norm(tempCovs - self.covs) / self.covs.shape[0] # NOTE average distance of params
             if np.all(lamDiffs < tol): # checking for a specified degree of convergence
                 print("lams were okay")
-                # or np.all(np.abs(meanDifs - prevMeanDiff) < tol
                 if np.all(meanDifs < tol): # checking for a specified degree of convergence
                     print("means were okay")
-                    # or np.all(np.abs(covDiffs - prevCovDiff) < tol
                     if np.all(covDiffs < tol): # checking for a specified degree of convergence
                         return
                     else:

@@ -39,7 +39,6 @@ def create5KFolds(sizeOfData): # update this
     # dont use validation data that was used to train
     
     # first segment testing indices away from the data set
-    prop = 0.1666666666667
     np.random.seed(0) # seed after each action due to how np.random works (readjusts seed each time)
     temp = np.arange(start = 0 , stop = sizeOfData)
     temp = np.random.permutation(temp)

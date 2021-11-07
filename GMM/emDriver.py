@@ -78,9 +78,10 @@ def visualRep(bestThresh, validationFeature, maskShape):
     temp[:] = 0
     temp[np.where(bayesianProb > bestThresh) ] = 1 
     temp = temp.reshape(maskShape)
-    firstImage = temp[0]
-    plt.imshow(firstImage)
-    plt.show()
+    for i in range(7):
+        firstImage = temp[i]
+        plt.imshow(firstImage)
+        plt.show()
 
 # collecting data sets
 print("Collecting Data sets...")
@@ -127,17 +128,16 @@ for i in range(5):
     thresholds.append(currThresh)
     print("Training finished for iteration {0}".format(i))
     shape = (8,768,1024, fGround.shape[-1])
-    # visualRep(currThresh, validation[i][0], shape)
     accuracies.append(currAcc)
 
+input("continue?\n")
 
 # ACTUAL RUNNING OF ALGORITHM
 
-timeTraining = 00
+timeTraining = 0
 timeInference = 0
 
 accuracies = np.array(accuracies)
-# np.savetxt("AccuraciesForModel.txt", accuracies)
 bestModelIndex = np.argmax(accuracies)
 numRuns = 10
 for t in range(numRuns):
