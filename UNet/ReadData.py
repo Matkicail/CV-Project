@@ -2,14 +2,13 @@ import os
 import torchvision.transforms as transforms
 from natsort import natsorted
 from glob import glob
-from skimage import img_as_float32, img_as_ubyte
 import numpy as np
 from PIL import Image
 from shutil import copy2, rmtree
 from random import randrange
 class ReadData():
     #Give the directory and imageSet Start and End. 6 images makes 1 set, so 6*1000 = 6000 images
-    def __init__(self, directory, transformImgs=None, transformMsks=None, splitDataSet = False, augmentDataSet = False):
+    def __init__(self, directory, transformImgs=None, splitDataSet = False, augmentDataSet = False):
         path_pairs = None
 
         #Load the images from the correct directory
@@ -26,7 +25,6 @@ class ReadData():
         
         #Save transformations
         self.transformImgs = transforms.Compose(transformImgs)
-        self.transformMsks = transforms.Compose(transformMsks)
 
         #Set up directories
         self.trainingDirectory = "./Data/Training"
@@ -49,13 +47,14 @@ class ReadData():
 
         if self.transformImgs:
             imgs = self.transformImgs(imgs)
-        if self.transformMsks:
-            msks = self.transformMsks(msks)
+            msks = self.transformImgs(msks)
 
         return imgs, msks
 
     def __len__(self):
         return len(self.imgs)
+
+    #-----------------------Helper-----------------------
 
     def CollectImages(self, directory):
         path_pairs = list(zip(
@@ -100,7 +99,6 @@ class ReadData():
                 copy2(self.msks[i], self.testingDirectory + '/masks-1024x768')
 
     def AugmentDataSet(self):
-
         #Rotate and save
         for i in range(len(self.imgs)):
             degrees = np.linspace(0, 360, randrange(3, 10))
