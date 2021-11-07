@@ -20,7 +20,6 @@ class UNetTrainer(pl.LightningModule):
         self.criterion = nn.BCEWithLogitsLoss()
         self.L1_criterion = nn.L1Loss()
 
-
     #Set up optimization step (Pytorch lightning)
     def configure_optimizers(self):
         return torch.optim.Adam(self.model.parameters(), lr=0.0002, betas=(0.5, 0.999))

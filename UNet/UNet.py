@@ -18,13 +18,13 @@ class UNetNetwork(nn.Module):
         self.down5 = vgg16[24:31]
 
         #Create Decoder Side
-        self.out1 = Decoder(512, 512)
-        self.out2 = Decoder(2*512, 256)
-        self.out3 = Decoder(2*256, 128)
-        self.out4 = Decoder(2*128, 64)
+        self.up1 = Decoder(512, 512)
+        self.up2 = Decoder(2*512, 256)
+        self.up3 = Decoder(2*256, 128)
+        self.up4 = Decoder(2*128, 64)
 
         #Final Layer uses sigmoid activation
-        self.out5 = nn.Sequential(
+        self.up5 = nn.Sequential(
             nn.Upsample(scale_factor=2),
             nn.ZeroPad2d((1,0,1,0)),
             nn.Conv2d(2*64, 1, 4, padding=1),
@@ -41,8 +41,8 @@ class UNetNetwork(nn.Module):
         d5 = self.down5(d4)
 
         #Decoder
-        u1 = torch.utils.checkpoint.checkpoint(self.out1, d5, d4) #Gradient checkpointing
-        u2 = self.out2(u1, d3)
-        u3 = self.out3(u2, d2)
-        u4 = self.out4(u3, d1)
-        return self.out5(u4)
+        u1 = torch.utils.checkpoint.checkpoint(self.up1, d5, d4) #Gradient checkpointing
+        u2 = self.up2(u1, d3)
+        u3 = self.up3(u2, d2)
+        u4 = self.up4(u3, d1)
+        return self.up5(u4)
